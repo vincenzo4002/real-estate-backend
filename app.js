@@ -4,7 +4,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
-import authRoutes from "./modules/auth/auth.routes.js";
+import authRoutes from "./src/modules/auth/auth.routes.js";
+import userRoutes from "./src/modules/users/user.routes.js";
 
 
 const app = express();
@@ -40,6 +41,7 @@ app.use(
 authRoutes
 );
 
+app.use("/api/v1/users", userRoutes);
 
 
 app.get("/",(req,res)=>{
