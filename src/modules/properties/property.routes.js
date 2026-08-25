@@ -12,9 +12,9 @@ import {
 } from "./property.controller.js";
 
 import { protect } from "../../middleware/auth.middleware.js";
-
 import { createPropertyValidator } from "./property.validator.js";
 import { validate } from "../../middleware/validate.middleware.js";
+import upload from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -30,25 +30,25 @@ router.get("/featured", featured);
 
 router.get("/latest", latest);
 
-
 /*
 |--------------------------------------------------------------------------
 | Protected Routes
 |--------------------------------------------------------------------------
 */
 
+router.post(
+    "/",
+    protect,
+    upload.array("images", 10),
+    createPropertyValidator,
+    validate,
+    create
+);
+
 router.get(
     "/my",
     protect,
     myProperties
-);
-
-router.post(
-    "/",
-    protect,
-    createPropertyValidator,
-    validate,
-    create
 );
 
 router.patch(
@@ -63,16 +63,12 @@ router.delete(
     remove
 );
 
-
 /*
 |--------------------------------------------------------------------------
-| Public Dynamic Route
+| Dynamic Route (Keep Last)
 |--------------------------------------------------------------------------
 */
 
-router.get(
-    "/:id",
-    getById
-);
+router.get("/:id", getById);
 
 export default router;
