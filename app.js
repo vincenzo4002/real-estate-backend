@@ -8,6 +8,7 @@ import authRoutes from "./src/modules/auth/auth.routes.js";
 import userRoutes from "./src/modules/users/user.routes.js";
 import propertyRoutes from "./src/modules/properties/property.routes.js";
 import wishlistRoutes from "./src/modules/wishlist/wishlist.routes.js";
+import visitRoutes from "./src/modules/visits/visit.routes.js";
 
 
 const app = express();
@@ -46,6 +47,7 @@ authRoutes
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/properties", propertyRoutes);
 app.use("/api/v1/wishlist",wishlistRoutes);
+app.use("/api/v1/visits",visitRoutes);
 
 
 app.get("/",(req,res)=>{
