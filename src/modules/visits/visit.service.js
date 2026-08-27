@@ -1,5 +1,6 @@
 import { Visit } from "./visit.model.js";
 import { Property } from "../properties/property.model.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 
 /*
@@ -26,7 +27,6 @@ export const scheduleVisit = async (
         );
     }
 
-
     const visitDate = new Date(data.visitDate);
 
     if (isNaN(visitDate.getTime())) {
@@ -35,19 +35,17 @@ export const scheduleVisit = async (
         );
     }
 
-
     if (visitDate <= new Date()) {
         throw new Error(
             "Visit date must be in the future."
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Check Existing Booking
-    |--------------------------------------------------------------------------
-    */
+    if (!data.visitTime) {
+        throw new Error(
+            "Visit time is required."
+        );
+    }
 
     const existingVisit = await Visit.findOne({
         property: propertyId,
@@ -61,19 +59,11 @@ export const scheduleVisit = async (
         }
     });
 
-
     if (existingVisit) {
         throw new Error(
             "This time slot is already booked."
         );
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create Visit
-    |--------------------------------------------------------------------------
-    */
 
     const visit = await Visit.create({
 
@@ -87,10 +77,44 @@ export const scheduleVisit = async (
 
         visitTime: data.visitTime,
 
-        message: data.message || ""
+        message: data.message || "",
+
+        status: "PENDING"
 
     });
 
+    try {
+
+        await createNotification({
+
+            recipient: property.owner,
+
+            type: "VISIT_SCHEDULED",
+
+            title: "New Property Visit",
+
+            message:
+                `A customer has scheduled a visit for ${property.title}.`,
+
+            property: property._id,
+
+            visit: visit._id,
+
+            metadata: {
+                visitDate: data.visitDate,
+                visitTime: data.visitTime
+            }
+
+        });
+
+    } catch (notificationError) {
+
+        console.error(
+            "Failed to create visit notification:",
+            notificationError.message
+        );
+
+    }
 
     return await Visit.findById(
         visit._id
@@ -164,30 +188,25 @@ export const getVisitById = async (
             "name email phone"
         );
 
-
     if (!visit) {
         throw new Error(
             "Visit not found."
         );
     }
 
-
     const isCustomer =
         visit.customer._id.toString() ===
         userId.toString();
 
-
     const isOwner =
         visit.owner._id.toString() ===
         userId.toString();
-
 
     if (!isCustomer && !isOwner) {
         throw new Error(
             "You are not authorized to view this visit."
         );
     }
-
 
     return visit;
 };
@@ -207,8 +226,11 @@ export const cancelVisit = async (
 
     const visit = await Visit.findById(
         visitId
-    );
-
+    )
+        .populate(
+            "property",
+            "title"
+        );
 
     if (!visit) {
         throw new Error(
@@ -216,16 +238,13 @@ export const cancelVisit = async (
         );
     }
 
-
     const isCustomer =
         visit.customer.toString() ===
         userId.toString();
 
-
     const isOwner =
         visit.owner.toString() ===
         userId.toString();
-
 
     if (!isCustomer && !isOwner) {
         throw new Error(
@@ -233,33 +252,60 @@ export const cancelVisit = async (
         );
     }
 
-
-    if (
-        visit.status === "CANCELLED"
-    ) {
+    if (visit.status === "CANCELLED") {
         throw new Error(
             "Visit is already cancelled."
         );
     }
 
-
-    if (
-        visit.status === "COMPLETED"
-    ) {
+    if (visit.status === "COMPLETED") {
         throw new Error(
             "Completed visit cannot be cancelled."
         );
     }
-
 
     visit.status = "CANCELLED";
 
     visit.cancellationReason =
         reason || "Cancelled by user";
 
-
     await visit.save();
 
+    const recipient = isCustomer
+        ? visit.owner
+        : visit.customer;
+
+    try {
+
+        await createNotification({
+
+            recipient,
+
+            type: "VISIT_CANCELLED",
+
+            title: "Visit Cancelled",
+
+            message:
+                `The property visit for ${visit.property.title} has been cancelled.`,
+
+            property: visit.property._id,
+
+            visit: visit._id,
+
+            metadata: {
+                reason: visit.cancellationReason
+            }
+
+        });
+
+    } catch (notificationError) {
+
+        console.error(
+            "Failed to create cancellation notification:",
+            notificationError.message
+        );
+
+    }
 
     return visit;
 };
@@ -278,15 +324,17 @@ export const confirmVisit = async (
 
     const visit = await Visit.findById(
         visitId
-    );
-
+    )
+        .populate(
+            "property",
+            "title"
+        );
 
     if (!visit) {
         throw new Error(
             "Visit not found."
         );
     }
-
 
     if (
         visit.owner.toString() !==
@@ -297,18 +345,48 @@ export const confirmVisit = async (
         );
     }
 
-
     if (visit.status !== "PENDING") {
         throw new Error(
             "Only pending visits can be confirmed."
         );
     }
 
-
     visit.status = "CONFIRMED";
 
     await visit.save();
 
+    try {
+
+        await createNotification({
+
+            recipient: visit.customer,
+
+            type: "VISIT_CONFIRMED",
+
+            title: "Visit Confirmed",
+
+            message:
+                `Your visit for ${visit.property.title} has been confirmed.`,
+
+            property: visit.property._id,
+
+            visit: visit._id,
+
+            metadata: {
+                visitDate: visit.visitDate,
+                visitTime: visit.visitTime
+            }
+
+        });
+
+    } catch (notificationError) {
+
+        console.error(
+            "Failed to create confirmation notification:",
+            notificationError.message
+        );
+
+    }
 
     return visit;
 };
@@ -327,15 +405,17 @@ export const completeVisit = async (
 
     const visit = await Visit.findById(
         visitId
-    );
-
+    )
+        .populate(
+            "property",
+            "title"
+        );
 
     if (!visit) {
         throw new Error(
             "Visit not found."
         );
     }
-
 
     if (
         visit.owner.toString() !==
@@ -346,18 +426,43 @@ export const completeVisit = async (
         );
     }
 
-
     if (visit.status !== "CONFIRMED") {
         throw new Error(
             "Only confirmed visits can be completed."
         );
     }
 
-
     visit.status = "COMPLETED";
 
     await visit.save();
 
+    try {
+
+        await createNotification({
+
+            recipient: visit.customer,
+
+            type: "PROPERTY_UPDATED",
+
+            title: "Property Visit Completed",
+
+            message:
+                `Your visit for ${visit.property.title} has been completed.`,
+
+            property: visit.property._id,
+
+            visit: visit._id
+
+        });
+
+    } catch (notificationError) {
+
+        console.error(
+            "Failed to create completion notification:",
+            notificationError.message
+        );
+
+    }
 
     return visit;
 };

@@ -9,6 +9,7 @@ import userRoutes from "./src/modules/users/user.routes.js";
 import propertyRoutes from "./src/modules/properties/property.routes.js";
 import wishlistRoutes from "./src/modules/wishlist/wishlist.routes.js";
 import visitRoutes from "./src/modules/visits/visit.routes.js";
+import notificationRoutes from "./src/modules/notifications/notification.routes.js";
 
 
 const app = express();
@@ -48,6 +49,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/properties", propertyRoutes);
 app.use("/api/v1/wishlist",wishlistRoutes);
 app.use("/api/v1/visits",visitRoutes);
+app.use("/api/v1/notifications",notificationRoutes);
 
 
 app.get("/",(req,res)=>{
