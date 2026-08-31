@@ -12,6 +12,10 @@ import visitRoutes from "./src/modules/visits/visit.routes.js";
 import notificationRoutes from "./src/modules/notifications/notification.routes.js";
 import messageRoutes from "./src/modules/messages/message.routes.js";
 import adminRoutes from "./src/modules/admin/admin.routes.js";
+import propertyAdminRoutes from "./src/modules/admin/property-admin.routes.js";
+import userAdminRoutes from "./src/modules/admin/user-admin.routes.js";
+import reportRoutes from "./src/modules/admin/report.routes.js";
+import settingsRoutes from "./src/modules/admin/settings.routes.js";
 
 const app = express();
 
@@ -53,7 +57,10 @@ app.use("/api/v1/visits",visitRoutes);
 app.use("/api/v1/notifications",notificationRoutes);
 app.use("/api/v1/messages",messageRoutes);
 app.use("/api/v1/admin",adminRoutes);
-
+app.use("/api/v1/admin/properties",propertyAdminRoutes);
+app.use("/api/v1/admin/customers",userAdminRoutes);
+app.use("/api/v1/admin/reports",reportRoutes);
+app.use("/api/v1/admin/settings",settingsRoutes);
 
 app.get("/",(req,res)=>{
 
