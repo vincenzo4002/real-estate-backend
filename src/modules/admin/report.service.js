@@ -1,4 +1,4 @@
-import { User } from "../users/user.model.js";
+import { User } from "../auth/user.model.js";
 import { Property } from "../properties/property.model.js";
 import { Visit } from "../visits/visit.model.js";
 import { Message } from "../messages/message.model.js";

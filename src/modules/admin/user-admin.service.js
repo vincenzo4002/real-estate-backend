@@ -1,4 +1,4 @@
-import { User } from "../users/user.model.js";
+import { User } from "../auth/user.model.js";
 import { createNotification } from "../notifications/notification.service.js";
 
 
