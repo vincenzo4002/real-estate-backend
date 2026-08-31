@@ -11,7 +11,7 @@ import wishlistRoutes from "./src/modules/wishlist/wishlist.routes.js";
 import visitRoutes from "./src/modules/visits/visit.routes.js";
 import notificationRoutes from "./src/modules/notifications/notification.routes.js";
 import messageRoutes from "./src/modules/messages/message.routes.js";
-
+import adminRoutes from "./src/modules/admin/admin.routes.js";
 
 const app = express();
 
@@ -52,6 +52,7 @@ app.use("/api/v1/wishlist",wishlistRoutes);
 app.use("/api/v1/visits",visitRoutes);
 app.use("/api/v1/notifications",notificationRoutes);
 app.use("/api/v1/messages",messageRoutes);
+app.use("/api/v1/admin",adminRoutes);
 
 
 app.get("/",(req,res)=>{
